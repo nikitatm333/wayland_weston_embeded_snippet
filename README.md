@@ -1,0 +1,1 @@
+# wayland_weston_embeded_snippet
