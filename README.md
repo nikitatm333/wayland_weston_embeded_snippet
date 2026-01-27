@@ -30,6 +30,13 @@ sudo ip addr add 10.0.0.2/24 dev enx28ee52015936
 
 ip addr flush dev end0  # Очистить старые адреса, если были
 
-Камера
+# Камера
 /etc/init.d/S40camera start
+# Экспозиция
+v4l2-ctl -d /dev/video0 --set-ctrl=exposure=200
 
+
+
+cmake ..     -DCMAKE_SYSROOT=$SYSROOT     -DARCH=aarch64     -DRKAIQ_TARGET_SOC="rk356x"     -DBUILROOT_BUILD_PROJECT=ON     -DCMAKE_C_FLAGS="-DISP_HW_VERSION=21 -DISP_HW_V21"     -DCMAKE_CXX_FLAGS="-DISP_HW_VERSION=21 -DISP_HW_V21"
+
+RK3568 SoC с ISP2 (rkisp версии v02.03.00).
