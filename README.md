@@ -80,4 +80,17 @@ cmake .. \
 make -j$(nproc)
 
 # rkaiq_3A_server не соберется! Соберем основную библиотеку librkaiq.so
+# Проблема в rkaiq_3A_server/CMakeLists.txt - там жестко прописан 32-битный ARM компилятор (arm-linux-gnueabihf), а у нас ARM64 (aarch64). Вот как это исправить:
 
+# Перейдем в директорию проекта
+cd ~/SOVA2.0/modules/camera_engine_rkaiq
+# Отредактируем файл
+nano rkaiq_3A_server/CMakeLists.txt
+
+# либо комментируем:
+# SET(CMAKE_C_COMPILER "/home/camera/camera/rv1109_sdk/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+# SET(CMAKE_CXX_COMPILER "/home/camera/camera/rv1109_sdk/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
+
+# Либо ставим наши кросс-компиляторы:
+SET(CMAKE_C_COMPILER "/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot/bin/aarch64-buildroot-linux-gnu-gcc")
+SET(CMAKE_CXX_COMPILER "/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot/bin/aarch64-buildroot-linux-gnu-g++")
