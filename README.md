@@ -94,3 +94,7 @@ nano rkaiq_3A_server/CMakeLists.txt
 # Либо ставим наши кросс-компиляторы:
 SET(CMAKE_C_COMPILER "/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot/bin/aarch64-buildroot-linux-gnu-gcc")
 SET(CMAKE_CXX_COMPILER "/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot/bin/aarch64-buildroot-linux-gnu-g++")
+
+# Проблема rkaiq_3A_server не может найти статические библиотеки алгоритмов (librkaiq_ae.a, librkaiq_awb.a и т.д.):
+# Заменяем эту строку SET(RK_AIQ_LIB_DIR ${RK_AIQ_SOURCE_DIR}/all_lib/${CMAKE_BUILD_TYPE}) на эту:
+SET(RK_AIQ_LIB_DIR ${CMAKE_BINARY_DIR}/all_lib/${CMAKE_BUILD_TYPE})
