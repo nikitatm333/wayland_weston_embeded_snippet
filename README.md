@@ -98,3 +98,32 @@ SET(CMAKE_CXX_COMPILER "/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-bu
 # Проблема rkaiq_3A_server не может найти статические библиотеки алгоритмов (librkaiq_ae.a, librkaiq_awb.a и т.д.):
 # Заменяем эту строку SET(RK_AIQ_LIB_DIR ${RK_AIQ_SOURCE_DIR}/all_lib/${CMAKE_BUILD_TYPE}) на эту:
 SET(RK_AIQ_LIB_DIR ${CMAKE_BINARY_DIR}/all_lib/${CMAKE_BUILD_TYPE})
+
+
+
+
+# Другой варик с https://github.com/MacroGroup/buildroot/tree/macro/package/diasom/rockchip/camera-engine-rkaiq
+
+cd ~/SOVA2.0/modules/camera_engine_rkaiq
+
+# Все патчи из папки ../patch/
+for patch in ../patch/*.patch; do
+    echo "Применяем $(basename "$patch")"
+    patch -p1 < "$patch"
+done
+
+export SDK_PATH=/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot
+export CC=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-gcc
+export CXX=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-g++
+export SYSROOT=$SDK_PATH/aarch64-buildroot-linux-gnu/sysroot
+
+cmake .. \
+    -DCMAKE_BUILD_TYPE=MinSizeRel \
+    -DISP_HW_VERSION=-DISP_HW_V21 \
+    -DRKAIQ_TARGET_SOC=rk356x \
+    -DBUILDROOT_BUILD_PROJECT=TRUE \
+    -DARCH=aarch64 \
+    -DCMAKE_C_COMPILER=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-gcc \
+    -DCMAKE_CXX_COMPILER=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-g++ \
+    -DCMAKE_SYSROOT=$SDK_PATH/aarch64-buildroot-linux-gnu/sysroot \
+    -DCMAKE_INSTALL_PREFIX=./install  
