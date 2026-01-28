@@ -39,4 +39,45 @@ v4l2-ctl -d /dev/video0 --set-ctrl=exposure=200
 
 cmake ..     -DCMAKE_SYSROOT=$SYSROOT     -DARCH=aarch64     -DRKAIQ_TARGET_SOC="rk356x"     -DBUILROOT_BUILD_PROJECT=ON     -DCMAKE_C_FLAGS="-DISP_HW_VERSION=21 -DISP_HW_V21"     -DCMAKE_CXX_FLAGS="-DISP_HW_VERSION=21 -DISP_HW_V21"
 
-RK3568 SoC с ISP2 (rkisp версии v02.03.00).
+RK3568 SoC с ISP2 (rkisp версии v02.03.00)
+
+
+# Сборка camera_engine_rkaiq
+
+# Репозиторий
+git clone https://gitlab.com/rk3588_linux/linux/external/camera_engine_rkaiq.git
+cd camera_engine_rkaiq
+
+# Переключаемся на ветку для RK356x
+git checkout rk356x
+
+# Настройка переменных окружения
+export SDK_PATH=/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot
+export CC=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-gcc
+export CXX=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-g++
+export SYSROOT=$SDK_PATH/aarch64-buildroot-linux-gnu/sysroot
+
+#  КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ iq_parser_v2/CMakeLists.txt:
+sed -i 's/\${ISP_HW_VERSION}/-DISP_HW_VERSION=20 -DISP_HW_V20/g' iq_parser_v2/CMakeLists.txt
+
+# Проверка замены
+grep "ISP_HW" iq_parser_v2/CMakeLists.txt | head -5
+
+# Отключение -Werror в основном CMakeLists.txt
+sed -i 's/-Werror/-Wno-error/g' CMakeLists.txt
+
+# Сборка 
+mkdir build && cd build
+
+cmake .. \
+    -DCMAKE_SYSROOT=$SYSROOT \
+    -DARCH=aarch64 \
+    -DRKAIQ_TARGET_SOC="rk356x" \
+    -DBUILROOT_BUILD_PROJECT=ON \
+    -DCMAKE_C_FLAGS="-DISP_HW_VERSION=20 -DISP_HW_V20" \
+    -DCMAKE_CXX_FLAGS="-DISP_HW_VERSION=20 -DISP_HW_V20"
+
+make -j$(nproc)
+
+# rkaiq_3A_server не соберется! Соберем основную библиотеку librkaiq.so
+
