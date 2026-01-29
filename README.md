@@ -15,8 +15,6 @@ ls /run/user/0
 export WAYLAND_DISPLAY=wayland-1
 gst-launch-1.0 v4l2src device=/dev/video0 ! videoconvert ! waylandsink
 
-
-
 --------------
 
 ip link set end1 up
@@ -102,21 +100,44 @@ SET(RK_AIQ_LIB_DIR ${CMAKE_BINARY_DIR}/all_lib/${CMAKE_BUILD_TYPE})
 
 
 
-# Другой варик с https://github.com/MacroGroup/buildroot/tree/macro/package/diasom/rockchip/camera-engine-rkaiq
+# Рецепт сборки camera_engine_rkaiq для rk3568 от MacroGroup 
+# Структура 
+```text
+.
+├── patch/                       # патчи для camera_engine_rkaiq
+└── camera_engine_rkaiq/         # штатный репо https://gitlab.com/rk3588_linux/linux/external/camera_engine_rkaiq
+```
+Для полного понимания происходящего можно обратиться сюда https://github.com/MacroGroup/buildroot/tree/macro/package/diasom/rockchip/camera-engine-rkaiq
 
-cd ~/SOVA2.0/modules/camera_engine_rkaiq
+```
+git clone https://gitlab.com/rk3588_linux/linux/external/camera_engine_rkaiq
+```
+```
+cd ~/camera_engine_rkaiq
+```
+```
+git checkout 77f10089
+```
 
 # Все патчи из папки ../patch/
+```
 for patch in ../patch/*.patch; do
     echo "Применяем $(basename "$patch")"
     patch -p1 < "$patch"
 done
+```
 
+#  Сборка
+```
 export SDK_PATH=/home/tnv/SOVA2.0/SDK/aarch64-buildroot-linux-gnu_sdk-buildroot
 export CC=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-gcc
 export CXX=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-g++
 export SYSROOT=$SDK_PATH/aarch64-buildroot-linux-gnu/sysroot
-
+```
+```
+mkdir build && cd build
+```
+```
 cmake .. \
     -DCMAKE_BUILD_TYPE=MinSizeRel \
     -DISP_HW_VERSION=-DISP_HW_V21 \
@@ -127,3 +148,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER=$SDK_PATH/bin/aarch64-buildroot-linux-gnu-g++ \
     -DCMAKE_SYSROOT=$SDK_PATH/aarch64-buildroot-linux-gnu/sysroot \
     -DCMAKE_INSTALL_PREFIX=./install  
+```
+```
+make -j$(nproc)
+```
