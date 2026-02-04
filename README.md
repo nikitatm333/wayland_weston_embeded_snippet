@@ -152,3 +152,73 @@ cmake .. \
 ```
 make -j$(nproc)
 ```
+
+
+
+void *engine_thread(void *arg)
+{
+    int ret = 0;
+    int isp_fd;
+    unsigned int stream_event = -1;
+    struct rkaiq_media_info *media_info;
+
+    media_info = (struct rkaiq_media_info *) arg;
+
+    isp_fd = open(media_info->vd_params_path, O_RDWR);
+    if (isp_fd < 0) {
+        ERR("open %s failed %s\n", media_info->vd_params_path, strerror(errno));
+        return NULL;
+    }
+
+    /* NOTE: раньше init_engine вызывался здесь. Теперь вызываем его
+       внутри цикла, чтобы при каждом старте стрима можно было прочитать
+       актуальный V4L2 input и подставить нужный sensor */
+    subscrible_stream_event(media_info, isp_fd, true);
+
+    for (;;) {
+        /* 1) Попробуем прочитать текущий input на mainpath (e.g. /dev/video0) */
+        int main_fd = open(media_info->mainpath, O_RDONLY);
+        if (main_fd >= 0) {
+            int input = 0;
+            if (xioctl(main_fd, VIDIOC_G_INPUT, &input) == 0) {
+                DBG("%s: current V4L2 input: %d\n", media_info->mainpath, input);
+
+              
+                if (input == 0) {
+                    strncpy(media_info->sensor_entity_name, "imx462 10-001a", sizeof(media_info->sensor_entity_name)-1);
+                } else if (input == 1) {
+                    strncpy(media_info->sensor_entity_name, "imx462 11-001a", sizeof(media_info->sensor_entity_name)-1);
+                } else {
+                    DBG("%s: unknown input %d, using default sensor_entity_name '%s'\n",
+                        media_info->mainpath, input, media_info->sensor_entity_name);
+                }
+                media_info->sensor_entity_name[sizeof(media_info->sensor_entity_name)-1] = '\0';
+            } else {
+                DBG("VIDIOC_G_INPUT on %s failed: %s\n", media_info->mainpath, strerror(errno));
+            }
+            close(main_fd);
+        } else {
+            DBG("open %s failed: %s\n", media_info->mainpath, strerror(errno));
+        }
+
+        init_engine(media_info);
+        subscrible_stream_event(media_info, isp_fd, true);
+        start_engine(media_info);
+
+        DBG("%s: wait stream start event...\n", media_info->mdev_path);
+        wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_START, -1);
+        DBG("%s: wait stream start event success ...\n", media_info->mdev_path);
+
+        DBG("%s: wait stream stop event...\n", media_info->mdev_path);
+        wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_STOP, -1);
+        DBG("%s: wait stream stop event success ...\n", media_info->mdev_path);
+
+        stop_engine(media_info);
+        deinit_engine(media_info);
+    }
+
+    subscrible_stream_event(media_info, isp_fd, false);
+    close(isp_fd);
+
+    return NULL;
+}
